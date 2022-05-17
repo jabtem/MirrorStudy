@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
-public class TestRoomPlayer : NetworkRoomPlayer
+
+public class TestPlayer : NetworkBehaviour
 {
     // Start is called before the first frame update
     void Start()
