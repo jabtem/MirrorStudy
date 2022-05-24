@@ -1,14 +1,18 @@
 {
     "name": "Mirror.Components",
+    "rootNamespace": "",
     "references": [
-        "Mirror"
+        "Mirror",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": []
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

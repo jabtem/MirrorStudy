@@ -4,6 +4,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+
 
 namespace Mirror
 {
@@ -45,13 +48,11 @@ namespace Mirror
         /// <summary>
         /// The scene to use for the room. This is similar to the offlineScene of the NetworkManager.
         /// </summary>
-        [Scene]
         public string RoomScene;
 
         /// <summary>
         /// The scene to use for the playing the game from the room. This is similar to the onlineScene of the NetworkManager.
         /// </summary>
-        [Scene]
         public string GameplayScene;
 
         /// <summary>
@@ -113,12 +114,15 @@ namespace Mirror
 
             if (roomPlayerPrefab != null)
             {
+                Debug.Log("확인용 1번");
+                #region 주석1
                 NetworkIdentity identity = roomPlayerPrefab.GetComponent<NetworkIdentity>();
                 if (identity == null)
                 {
                     roomPlayerPrefab = null;
                     Debug.LogError("RoomPlayer prefab must have a NetworkIdentity component.");
                 }
+                #endregion
             }
 
             base.OnValidate();
@@ -247,6 +251,7 @@ namespace Mirror
         /// <param name="conn">Connection from client.</param>
         public override void OnServerConnect(NetworkConnectionToClient conn)
         {
+            Debug.Log("OnserverConnet");
             if (numPlayers >= maxConnections)
             {
                 conn.Disconnect();
@@ -314,11 +319,10 @@ namespace Mirror
         /// <para>The default implementation for this function creates a new player object from the playerPrefab.</para>
         /// </summary>
         /// <param name="conn">Connection from client.</param>
-        public override void OnServerAddPlayer(NetworkConnectionToClient conn)
+        public async override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
             // increment the index before adding the player, so first player starts at 1
             clientIndex++;
-
             if (IsSceneActive(RoomScene))
             {
                 if (roomSlots.Count == maxConnections)
@@ -330,12 +334,16 @@ namespace Mirror
 
                 GameObject newRoomGameObject = OnRoomServerCreateRoomPlayer(conn);
                 if (newRoomGameObject == null)
-                    newRoomGameObject = Instantiate(roomPlayerPrefab.gameObject, Vector3.zero, Quaternion.identity);
+                {
+                    newRoomGameObject = await Addressables.InstantiateAsync("RoomPlayer").Task;
+                }
+                    //newRoomGameObject = Instantiate(roomPlayerPrefab.gameObject, Vector3.zero, Quaternion.identity);
 
                 NetworkServer.AddPlayerForConnection(conn, newRoomGameObject);
             }
             else
                 OnRoomServerAddPlayer(conn);
+
         }
 
         [Server]
@@ -380,7 +388,31 @@ namespace Mirror
 
             base.ServerChangeScene(newSceneName);
         }
+        public override void ServerChangeAddressableScene(string newSceneName)
+        {
+            if (newSceneName == RoomScene)
+            {
+                foreach (NetworkRoomPlayer roomPlayer in roomSlots)
+                {
+                    if (roomPlayer == null)
+                        continue;
 
+                    // find the game-player object for this connection, and destroy it
+                    NetworkIdentity identity = roomPlayer.GetComponent<NetworkIdentity>();
+
+                    if (NetworkServer.active)
+                    {
+                        // re-add the room object
+                        roomPlayer.GetComponent<NetworkRoomPlayer>().readyToBegin = false;
+                        NetworkServer.ReplacePlayerForConnection(identity.connectionToClient, roomPlayer.gameObject);
+                    }
+                }
+
+                allPlayersReady = false;
+            }
+
+            base.ServerChangeAddressableScene(newSceneName);
+        }
         /// <summary>
         /// Called on the server when a scene is completed loaded, when the scene load was initiated by the server with ServerChangeScene().
         /// </summary>
@@ -455,13 +487,15 @@ namespace Mirror
         /// </summary>
         public override void OnStartClient()
         {
-            if (roomPlayerPrefab == null || roomPlayerPrefab.gameObject == null)
-                Debug.LogError("NetworkRoomManager no RoomPlayer prefab is registered. Please add a RoomPlayer prefab.");
-            else
-                NetworkClient.RegisterPrefab(roomPlayerPrefab.gameObject);
+            #region 주석2
+            //if (roomPlayerPrefab == null || roomPlayerPrefab.gameObject == null)
+            //    Debug.LogError("NetworkRoomManager no RoomPlayer prefab is registered. Please add a RoomPlayer prefab.");
+            //else
+            //    NetworkClient.RegisterPrefab(roomPlayerPrefab.gameObject);
 
-            if (playerPrefab == null)
-                Debug.LogError("NetworkRoomManager no GamePlayer prefab is registered. Please add a GamePlayer prefab.");
+            //if (playerPrefab == null)
+            //    Debug.LogError("NetworkRoomManager no GamePlayer prefab is registered. Please add a GamePlayer prefab.");
+            #endregion
 
             OnRoomStartClient();
         }

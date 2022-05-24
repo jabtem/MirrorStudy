@@ -120,6 +120,7 @@ namespace Mirror
         /// <summary>Starts server and listens to incoming connections with max connections limit.</summary>
         public static void Listen(int maxConns)
         {
+            Debug.Log("Listen");
             Initialize();
             maxConnections = maxConns;
 

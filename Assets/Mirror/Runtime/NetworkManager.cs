@@ -5,6 +5,9 @@ using kcp2k;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceProviders;
 
 namespace Mirror
 {
@@ -39,13 +42,13 @@ namespace Mirror
 
         /// <summary>Automatically switch to this scene upon going offline (on start / on disconnect / on shutdown).</summary>
         [Header("Scene Management")]
-        [Scene]
+        //[Scene]
         [FormerlySerializedAs("m_OfflineScene")]
         [Tooltip("Scene that Mirror will switch to when the client or server is stopped")]
         public string offlineScene = "";
 
         /// <summary>Automatically switch to this scene upon going online (after connect/startserver).</summary>
-        [Scene]
+        //[Scene]
         [FormerlySerializedAs("m_OnlineScene")]
         [Tooltip("Scene that Mirror will switch to when the server is started. Clients will recieve a Scene Message to load the server's current scene when they connect.")]
         public string onlineScene = "";
@@ -260,7 +263,7 @@ namespace Mirror
             // note: there is no risk of someone connecting after Listen() and
             //       before OnStartServer() because this all runs in one thread
             //       and we don't start processing connects until Update.
-            OnStartServer();
+            //OnStartServer();
 
             // this must be after Listen(), since that registers the default message handlers
             RegisterServerMessages();
@@ -426,7 +429,9 @@ namespace Mirror
             {
                 // call FinishStartHost after changing scene.
                 finishStartHostPending = true;
-                ServerChangeScene(onlineScene);
+                Debug.Log("NetWorkManager IsSerOnlineSceneChangeNeeded");
+                //ServerChangeScene(onlineScene);
+                ServerChangeAddressableScene(onlineScene);
             }
             // otherwise call FinishStartHost directly
             else
@@ -751,6 +756,8 @@ namespace Mirror
         // the change and ready again to participate in the new scene.
         public virtual void ServerChangeScene(string newSceneName)
         {
+            Debug.Log("ServerChangeScene");
+
             if (string.IsNullOrWhiteSpace(newSceneName))
             {
                 Debug.LogError("ServerChangeScene empty scene name");
@@ -776,6 +783,7 @@ namespace Mirror
 
             loadingSceneAsync = SceneManager.LoadSceneAsync(newSceneName);
 
+
             // ServerChangeScene can be called when stopping the server
             // when this happens the server is not active so does not need to tell clients about the change
             if (NetworkServer.active)
@@ -788,7 +796,7 @@ namespace Mirror
             startPositions.Clear();
         }
 
-        public virtual void ServerChangeAddresableScene(string newSceneName)
+        public  virtual void ServerChangeAddressableScene(string newSceneName)
         {
             if (string.IsNullOrWhiteSpace(newSceneName))
             {
@@ -814,9 +822,20 @@ namespace Mirror
             NetworkServer.isLoadingScene = true;
 
 
-            
 
-            loadingSceneAsync = SceneManager.LoadSceneAsync(newSceneName);
+
+            //loadingSceneAsync 
+            Addressables.LoadSceneAsync(newSceneName, LoadSceneMode.Single).Completed +=
+                (result) =>
+                {
+                    if (result.Status == AsyncOperationStatus.Succeeded)
+                    {
+                        FinishLoadScene();
+                    }
+                };
+            //대기하도록 수정
+
+            
 
             // ServerChangeScene can be called when stopping the server
             // when this happens the server is not active so does not need to tell clients about the change
@@ -875,7 +894,15 @@ namespace Mirror
             switch (sceneOperation)
             {
                 case SceneOperation.Normal:
-                    loadingSceneAsync = SceneManager.LoadSceneAsync(newSceneName);
+                    //loadingSceneAsync = SceneManager.LoadSceneAsync(newSceneName);
+                    Addressables.LoadSceneAsync(newSceneName, LoadSceneMode.Single).Completed +=
+                        (result) =>
+                         {
+                                if (result.Status == AsyncOperationStatus.Succeeded)
+                                {
+                                    FinishLoadScene();
+                                }
+                        };
                     break;
                 case SceneOperation.LoadAdditive:
                     // Ensure additive scene is not already loaded on client by name or path
@@ -939,7 +966,7 @@ namespace Mirror
 
         void UpdateScene()
         {
-            if (loadingSceneAsync != null && loadingSceneAsync.isDone)
+            if ((loadingSceneAsync != null && loadingSceneAsync.isDone))
             {
                 //Debug.Log($"ClientChangeScene done readyConn {clientReadyConnection}");
 
@@ -961,6 +988,7 @@ namespace Mirror
 
         protected void FinishLoadScene()
         {
+            Debug.Log("FinishLoadScene");
             // NOTE: this cannot use NetworkClient.allClients[0] - that client may be for a completely different purpose.
 
             // process queued messages that we received while loading the scene
@@ -1176,7 +1204,7 @@ namespace Mirror
 
         void OnServerAddPlayerInternal(NetworkConnectionToClient conn, AddPlayerMessage msg)
         {
-            //Debug.Log("NetworkManager.OnServerAddPlayer");
+            Debug.Log("NetworkManager.OnServerAddPlayer");
 
             if (autoCreatePlayer && playerPrefab == null)
             {
