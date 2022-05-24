@@ -585,6 +585,8 @@ namespace Mirror
         /// <summary>Register spawnable prefab.</summary>
         public static void RegisterPrefab(GameObject prefab)
         {
+            Debug.Log("RegisterPrefab");
+
             if (prefab == null)
             {
                 Debug.LogError("Could not register prefab because it was null");

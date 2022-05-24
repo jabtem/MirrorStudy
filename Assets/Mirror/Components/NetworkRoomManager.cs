@@ -114,14 +114,13 @@ namespace Mirror
 
             if (roomPlayerPrefab != null)
             {
-                Debug.Log("확인용 1번");
                 #region 주석1
-                NetworkIdentity identity = roomPlayerPrefab.GetComponent<NetworkIdentity>();
-                if (identity == null)
-                {
-                    roomPlayerPrefab = null;
-                    Debug.LogError("RoomPlayer prefab must have a NetworkIdentity component.");
-                }
+                //NetworkIdentity identity = roomPlayerPrefab.GetComponent<NetworkIdentity>();
+                //if (identity == null)
+                //{
+                //    roomPlayerPrefab = null;
+                //    Debug.LogError("RoomPlayer prefab must have a NetworkIdentity component.");
+                //}
                 #endregion
             }
 
@@ -173,6 +172,7 @@ namespace Mirror
         {
             Debug.Log($"NetworkRoom SceneLoadedForPlayer scene: {SceneManager.GetActiveScene().path} {conn}");
 
+            Debug.Log("bbbb");
             if (IsSceneActive(RoomScene))
             {
                 // cant be ready in room, add to ready list
@@ -189,8 +189,10 @@ namespace Mirror
                 // get start position from base class
                 Transform startPos = GetStartPosition();
                 gamePlayer = startPos != null
-                    ? Instantiate(playerPrefab, startPos.position, startPos.rotation)
-                    : Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
+                    ? Instantiate(playerPrefab, startPos.position, startPos.rotation) : Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
+
+                //gamePlayer = startPos != null ? 
+                //    await Addressables.InstantiateAsync("TestPlayer", startPos.position, startPos.rotation).Task : await Addressables.InstantiateAsync("TestPlayer", Vector3.zero, Quaternion.identity).Task ;
             }
 
             if (!OnRoomServerSceneLoadedForPlayer(conn, roomPlayer, gamePlayer))
@@ -319,8 +321,11 @@ namespace Mirror
         /// <para>The default implementation for this function creates a new player object from the playerPrefab.</para>
         /// </summary>
         /// <param name="conn">Connection from client.</param>
+        /// 서버에서만 호출(호스트)
         public async override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
+
+            Debug.Log("OnServerAddPlayer");
             // increment the index before adding the player, so first player starts at 1
             clientIndex++;
             if (IsSceneActive(RoomScene))
@@ -337,7 +342,8 @@ namespace Mirror
                 {
                     newRoomGameObject = await Addressables.InstantiateAsync("RoomPlayer").Task;
                 }
-                    //newRoomGameObject = Instantiate(roomPlayerPrefab.gameObject, Vector3.zero, Quaternion.identity);
+
+                //newRoomGameObject = Instantiate(roomPlayerPrefab.gameObject, Vector3.zero, Quaternion.identity);
 
                 NetworkServer.AddPlayerForConnection(conn, newRoomGameObject);
             }
@@ -485,16 +491,22 @@ namespace Mirror
         /// <summary>
         /// This is invoked when the client is started.
         /// </summary>
+        /// 
         public override void OnStartClient()
         {
+            Debug.Log("StartClient");
             #region 주석2
-            //if (roomPlayerPrefab == null || roomPlayerPrefab.gameObject == null)
-            //    Debug.LogError("NetworkRoomManager no RoomPlayer prefab is registered. Please add a RoomPlayer prefab.");
-            //else
-            //    NetworkClient.RegisterPrefab(roomPlayerPrefab.gameObject);
+            if (roomPlayerPrefab == null || roomPlayerPrefab.gameObject == null)
+                Debug.LogError("NetworkRoomManager no RoomPlayer prefab is registered. Please add a RoomPlayer prefab.");
+            else
+            {
+                //Only 클라이언트 경우 프리펩 등록안되면 현재 오류
+                NetworkClient.RegisterPrefab(roomPlayerPrefab.gameObject);
+            }
 
-            //if (playerPrefab == null)
-            //    Debug.LogError("NetworkRoomManager no GamePlayer prefab is registered. Please add a GamePlayer prefab.");
+
+            if (playerPrefab == null)
+                Debug.LogError("NetworkRoomManager no GamePlayer prefab is registered. Please add a GamePlayer prefab.");
             #endregion
 
             OnRoomStartClient();

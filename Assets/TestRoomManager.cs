@@ -46,6 +46,20 @@ public class TestRoomManager : NetworkRoomManager
 
     }//GameStartButton
 
+    //편집기 전용
+    public override void OnValidate()
+    {
+        maxConnections = Mathf.Max(maxConnections, 0);
+
+        // always <= maxConnections
+        minPlayers = Mathf.Min(minPlayers, maxConnections);
+
+        // always >= 0
+        minPlayers = Mathf.Max(minPlayers, 0);
+
+        //base.OnValidate();
+    }
+
     public override void OnServerSceneChanged(string sceneName)
     {
         base.OnServerSceneChanged(sceneName);

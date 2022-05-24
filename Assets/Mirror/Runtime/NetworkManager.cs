@@ -1332,7 +1332,7 @@ namespace Mirror
             Transform startPos = GetStartPosition();
             GameObject player = startPos != null
                 ? Instantiate(playerPrefab, startPos.position, startPos.rotation)
-                : Instantiate(playerPrefab);
+                : Instantiate(playerPrefab,Vector3.zero,Quaternion.identity);
 
             // instantiating a "Player" prefab gives it the name "Player(clone)"
             // => appending the connectionId is WAY more useful for debugging!
