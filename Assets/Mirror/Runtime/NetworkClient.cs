@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Mirror.RemoteCalls;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Mirror
 {
@@ -585,7 +587,7 @@ namespace Mirror
         /// <summary>Register spawnable prefab.</summary>
         public static void RegisterPrefab(GameObject prefab)
         {
-            Debug.Log("RegisterPrefab");
+
 
             if (prefab == null)
             {
@@ -601,6 +603,24 @@ namespace Mirror
             }
 
             RegisterPrefabIdentity(identity);
+        }
+
+
+        public async static void RegisterPrefab(string prefabPath)
+        {
+            Debug.Log("RegisterPrefab");
+            if (prefabPath == null)
+            {
+                Debug.LogError("Could not register prefab because it was null");
+                return;
+            }
+
+            GameObject prefapObj = await Addressables.LoadAssetAsync<GameObject>(prefabPath).Task;
+
+            prefapObj.TryGetComponent<NetworkIdentity>(out NetworkIdentity identity);
+
+            RegisterPrefabIdentity(identity);
+
         }
 
         /// <summary>Register a spawnable prefab with custom assetId and custom spawn/unspawn handlers.</summary>
@@ -1048,6 +1068,8 @@ namespace Mirror
         // Finds Existing Object with NetId or spawns a new one using AssetId or sceneId
         internal static bool FindOrSpawnObject(SpawnMessage message, out NetworkIdentity identity)
         {
+            Debug.Log("FindOrSpawnObject");
+
             // was the object already spawned?
             identity = GetExistingObject(message.netId);
 
@@ -1089,6 +1111,9 @@ namespace Mirror
             //            before falling back to regular Destroy. this needs to
             //            be consistent.
             //            https://github.com/vis2k/Mirror/issues/2705
+
+            Debug.Log("SpawnPrefab");
+
             if (spawnHandlers.TryGetValue(message.assetId, out SpawnHandlerDelegate handler))
             {
                 GameObject obj = handler(message);

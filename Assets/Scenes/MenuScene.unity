@@ -304,13 +304,15 @@ MonoBehaviour:
   networkAddress: localhost
   maxConnections: 100
   authenticator: {fileID: 0}
-  playerPrefab: {fileID: 1963620948467114313, guid: 48d229f2ea4960a41a0a1e3718faab48, type: 3}
+  playerPrefab: {fileID: 0}
+  playerPrefabPath: TestPlayer
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs: []
   showRoomGUI: 1
   minPlayers: 1
-  roomPlayerPrefab: {fileID: 4540893811521537218, guid: 4b38bd8aafba7eb4589eb194c75b18fe, type: 3}
+  roomPlayerPrefab: {fileID: 0}
+  roomPlayerPrefabPath: RoomPlayer
   RoomScene: LobyScene
   GameplayScene: GameScene
   _allPlayersReady: 0

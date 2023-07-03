@@ -80,6 +80,7 @@ namespace Mirror
         [FormerlySerializedAs("m_PlayerPrefab")]
         [Tooltip("Prefab of the player object. Prefab must have a Network Identity component. May be an empty game object or a full avatar.")]
         public GameObject playerPrefab;
+        public string playerPrefabPath;
 
         /// <summary>Enable to automatically create player objects on connect and on scene change.</summary>
         [FormerlySerializedAs("m_AutoCreatePlayer")]
@@ -689,6 +690,7 @@ namespace Mirror
             return true;
         }
 
+        //(서버) 플레이어 프리팹 등록용
         void RegisterServerMessages()
         {
             NetworkServer.OnConnectedEvent = OnServerConnectInternal;
@@ -700,6 +702,8 @@ namespace Mirror
             NetworkServer.ReplaceHandler<ReadyMessage>(OnServerReadyMessageInternal);
         }
 
+
+        //(클라이언트) 플레이어 프리팹 등록용
         void RegisterClientMessages()
         {
             NetworkClient.OnConnectedEvent = OnClientConnectInternal;
@@ -708,8 +712,10 @@ namespace Mirror
             NetworkClient.RegisterHandler<NotReadyMessage>(OnClientNotReadyMessageInternal);
             NetworkClient.RegisterHandler<SceneMessage>(OnClientSceneInternal, false);
 
-            if (playerPrefab != null)
-                NetworkClient.RegisterPrefab(playerPrefab);
+            Debug.Log("RegisetClientMessage");
+
+            if (playerPrefabPath != null)
+                NetworkClient.RegisterPrefab(playerPrefabPath);
 
             foreach (GameObject prefab in spawnPrefabs.Where(t => t != null))
                 NetworkClient.RegisterPrefab(prefab);
@@ -1206,17 +1212,17 @@ namespace Mirror
         {
             Debug.Log("NetworkManager.OnServerAddPlayer");
 
-            if (autoCreatePlayer && playerPrefab == null)
+            if (autoCreatePlayer && (playerPrefab == null && playerPrefabPath == null))
             {
                 Debug.LogError("The PlayerPrefab is empty on the NetworkManager. Please setup a PlayerPrefab object.");
                 return;
             }
 
-            if (autoCreatePlayer && playerPrefab.GetComponent<NetworkIdentity>() == null)
-            {
-                Debug.LogError("The PlayerPrefab does not have a NetworkIdentity. Please add a NetworkIdentity to the player prefab.");
-                return;
-            }
+            //if (autoCreatePlayer && playerPrefab.GetComponent<NetworkIdentity>() == null)
+            //{
+            //    Debug.LogError("The PlayerPrefab does not have a NetworkIdentity. Please add a NetworkIdentity to the player prefab.");
+            //    return;
+            //}
 
             if (conn.identity != null)
             {

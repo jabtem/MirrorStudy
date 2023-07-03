@@ -44,6 +44,7 @@ namespace Mirror
         [SerializeField]
         [Tooltip("Prefab to use for the Room Player")]
         public NetworkRoomPlayer roomPlayerPrefab;
+        public string roomPlayerPrefabPath;
 
         /// <summary>
         /// The scene to use for the room. This is similar to the offlineScene of the NetworkManager.
@@ -168,11 +169,12 @@ namespace Mirror
             }
         }
 
-        void SceneLoadedForPlayer(NetworkConnectionToClient conn, GameObject roomPlayer)
+
+        //서버(호스트) 쪽에서 인게임플레이어 프리펩 생성시 사용됨
+        async void SceneLoadedForPlayer(NetworkConnectionToClient conn, GameObject roomPlayer)
         {
             Debug.Log($"NetworkRoom SceneLoadedForPlayer scene: {SceneManager.GetActiveScene().path} {conn}");
 
-            Debug.Log("bbbb");
             if (IsSceneActive(RoomScene))
             {
                 // cant be ready in room, add to ready list
@@ -188,11 +190,11 @@ namespace Mirror
             {
                 // get start position from base class
                 Transform startPos = GetStartPosition();
-                gamePlayer = startPos != null
-                    ? Instantiate(playerPrefab, startPos.position, startPos.rotation) : Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
+                //gamePlayer = startPos != null
+                //    ? Instantiate(playerPrefab, startPos.position, startPos.rotation) : Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
 
-                //gamePlayer = startPos != null ? 
-                //    await Addressables.InstantiateAsync("TestPlayer", startPos.position, startPos.rotation).Task : await Addressables.InstantiateAsync("TestPlayer", Vector3.zero, Quaternion.identity).Task ;
+                gamePlayer = startPos != null ?
+                    await Addressables.InstantiateAsync(playerPrefabPath, startPos.position, startPos.rotation).Task : await Addressables.InstantiateAsync(playerPrefabPath, Vector3.zero, Quaternion.identity).Task;
             }
 
             if (!OnRoomServerSceneLoadedForPlayer(conn, roomPlayer, gamePlayer))
@@ -340,7 +342,7 @@ namespace Mirror
                 GameObject newRoomGameObject = OnRoomServerCreateRoomPlayer(conn);
                 if (newRoomGameObject == null)
                 {
-                    newRoomGameObject = await Addressables.InstantiateAsync("RoomPlayer").Task;
+                    newRoomGameObject = await Addressables.InstantiateAsync(roomPlayerPrefabPath).Task;
                 }
 
                 //newRoomGameObject = Instantiate(roomPlayerPrefab.gameObject, Vector3.zero, Quaternion.identity);
@@ -491,24 +493,25 @@ namespace Mirror
         /// <summary>
         /// This is invoked when the client is started.
         /// </summary>
-        /// 
+        /// 클라이언트에서 프리팹 등록할때 사용 
         public override void OnStartClient()
         {
             Debug.Log("StartClient");
             #region 주석2
-            if (roomPlayerPrefab == null || roomPlayerPrefab.gameObject == null)
-                Debug.LogError("NetworkRoomManager no RoomPlayer prefab is registered. Please add a RoomPlayer prefab.");
-            else
-            {
-                //Only 클라이언트 경우 프리펩 등록안되면 현재 오류
-                NetworkClient.RegisterPrefab(roomPlayerPrefab.gameObject);
-            }
+            //if (roomPlayerPrefab == null || roomPlayerPrefab.gameObject == null)
+            //    Debug.LogError("NetworkRoomManager no RoomPlayer prefab is registered. Please add a RoomPlayer prefab.");
+            //else
+            //{
 
 
-            if (playerPrefab == null)
-                Debug.LogError("NetworkRoomManager no GamePlayer prefab is registered. Please add a GamePlayer prefab.");
+            //}
+
+
+            //if (playerPrefab == null)
+            //    Debug.LogError("NetworkRoomManager no GamePlayer prefab is registered. Please add a GamePlayer prefab.");
             #endregion
-
+            //Only 클라이언트 경우 프리펩 등록안되면 현재 오류
+            NetworkClient.RegisterPrefab(roomPlayerPrefabPath);
             OnRoomStartClient();
         }
 
